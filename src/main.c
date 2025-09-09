@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+const int DEBUG = 0;
+
 int main()
 {
 	while (1) {
@@ -19,7 +21,7 @@ int main()
 		 */
 
 		char *input = get_input();
-		printf("whole input: %s\n", input);
+		if (DEBUG) printf("whole input: %s\n", input);
 
 		tokenlist *tokens = get_tokens(input);
 		int num_tokens = tokens->size;
@@ -116,7 +118,7 @@ int main()
 		free(path_copy);
 
 		for (int i = 0; i < tokens->size; i++) {
-			printf("token %d: (%s)\n", i, tokens->items[i]);
+			if (DEBUG) printf("token %d: (%s)\n", i, tokens->items[i]);
 		}
 
 		free(input);
