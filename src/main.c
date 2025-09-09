@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 int main()
 {
@@ -84,8 +85,32 @@ int main()
 			printf("Command '%s' not found\n", first_token);
 			// TODO: check for internal commands (part 9)
 		} else {
-			// TODO: run the executable in exec_path
-			free(exec_path);
+			pid_t pid = fork();
+			if (pid == 0) {
+				// child process
+
+				// create pointer array for execv to have NULL at the end
+				char** argv = malloc((tokens->size + 1) * sizeof(char*));
+				for (int i = 0; i < num_tokens; i++) {
+					argv[i] = tokens->items[i];
+				}
+				argv[num_tokens] = NULL;
+
+				if (execv(exec_path, argv) == -1) {
+					perror("execv failed");
+				}
+				free(exec_path);
+				// if execv returns, it failed
+				_exit(EXIT_FAILURE);
+			} else if (pid < 0) {
+				// Fork failed
+				perror("fork failed");
+			} else {
+				// Parent process
+				int status;
+				waitpid(pid, &status, 0);
+				free(exec_path);
+			}
 		}
 
 		free(path_copy);
