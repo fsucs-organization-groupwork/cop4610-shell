@@ -101,6 +101,7 @@ int main()
 				if (execv(exec_path, argv) == -1) {
 					perror("execv failed");
 				}
+				free(argv);
 				free(exec_path);
 				// if execv returns, it failed
 				_exit(EXIT_FAILURE);
