@@ -22,16 +22,27 @@ int main()
 		tokenlist *tokens = get_tokens(input);
 		int num_tokens = tokens->size;
 
-		// replace tokens in the format of $<ENV_VAR>
+		// replace tokens like $USER or ~
         for (int i = 0; i < num_tokens; i++) {
-            if (tokens->items[i][0] == '$') {
+            if (tokens->items[i][0] == '~' && (tokens->items[i][1] == '/' || tokens->items[i][1] == '\0')) {
+                // Replace ~ with $HOME
+                char* home = getenv("HOME");
+                if (home) {
+                    char* new_token = malloc(strlen(home) + strlen(tokens->items[i]) + 1);
+                    strcpy(new_token, home);
+                    strcat(new_token, tokens->items[i] + 1); // skip '~'
+                    free(tokens->items[i]);
+                    tokens->items[i] = new_token;
+                }
+                continue;
+            } else if (tokens->items[i][0] == '$') {
                 char* var_name = tokens->items[i] + 1;  // skip '$'
                 char* var_value = getenv(var_name);
                 if (var_value) {
                     free(tokens->items[i]);
                     char* new_token = malloc(strlen(var_value) + 1);
                     strcpy(new_token, var_value);
-                    tokens->items[i] = new_token; // replace in the token list
+                    tokens->items[i] = new_token;
                 }
             }
         }
