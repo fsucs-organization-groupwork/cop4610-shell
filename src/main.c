@@ -36,6 +36,21 @@ int main()
             }
         }
 
+		// search all paths in $PATH env variable for executable files in tokens[0]
+		const char* path = getenv("PATH");
+        char* path_copy = malloc(strlen(path) + 1);
+        strcpy(path_copy, path);
+
+        char* token = strtok(path_copy, ":");
+        while (token != NULL) {
+			printf("PATH token: %s\n", token);
+            token = strtok(NULL, ":");
+
+			// TODO: check if executable exists in this path for tokens[0]
+        }
+
+		free(path_copy);
+
 		for (int i = 0; i < tokens->size; i++) {
 			printf("token %d: (%s)\n", i, tokens->items[i]);
 		}
