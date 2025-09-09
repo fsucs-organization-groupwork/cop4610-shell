@@ -4,7 +4,12 @@
 int main()
 {
 	while (1) {
-		printf("> ");
+		// get $USER, $MACHINE, $PWD env variables
+        char *user = getenv("USER");
+        char *machine = getenv("MACHINE");
+        char *pwd = getenv("PWD");
+
+		printf("%s@%s:%s> ", user, machine, pwd);
 
 		/* input contains the whole command
 		 * tokens contains substrings from input split by spaces
