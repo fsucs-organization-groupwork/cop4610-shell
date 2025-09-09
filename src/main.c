@@ -1,6 +1,10 @@
 #include "lexer.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+const int DEBUG = 0;
 
 int main()
 {
@@ -17,10 +21,17 @@ int main()
 		 */
 
 		char *input = get_input();
-		printf("whole input: %s\n", input);
+		if (DEBUG) printf("whole input: %s\n", input);
 
 		tokenlist *tokens = get_tokens(input);
 		int num_tokens = tokens->size;
+
+		// if there's no input, just continue
+		if (num_tokens == 0) {
+			free(input);
+			free_tokens(tokens);
+			continue;
+		}
 
 		// replace tokens like $USER or ~
         for (int i = 0; i < num_tokens; i++) {
@@ -47,8 +58,68 @@ int main()
             }
         }
 
+		// search all paths in $PATH env variable for executable files in tokens[0]
+		const char* path = getenv("PATH");
+        char* path_copy = malloc(strlen(path) + 1);
+        strcpy(path_copy, path);
+
+		const char* first_token = tokens->items[0];
+		char* exec_path = NULL;
+        char* token = strtok(path_copy, ":");
+
+        while (token != NULL) {
+			// check if executable exists in this path for tokens[0]
+			exec_path = malloc(strlen(token) + strlen(first_token) + 2);
+			sprintf(exec_path, "%s/%s", token, first_token); // to add the / after the path
+			
+			if (access(exec_path, X_OK) == 0) {
+				// if it's found just break because exec_path is set
+				break;
+			}
+
+			free(exec_path);
+			exec_path = NULL;
+        
+			token = strtok(NULL, ":");
+		}
+
+		if (exec_path == NULL) {
+			printf("Command '%s' not found\n", first_token);
+			// TODO: check for internal commands (part 9)
+		} else {
+			pid_t pid = fork();
+			if (pid == 0) {
+				// child process
+
+				// create pointer array for execv to have NULL at the end
+				char** argv = malloc((tokens->size + 1) * sizeof(char*));
+				for (int i = 0; i < num_tokens; i++) {
+					argv[i] = tokens->items[i];
+				}
+				argv[num_tokens] = NULL;
+
+				if (execv(exec_path, argv) == -1) {
+					perror("execv failed");
+				}
+				free(argv);
+				free(exec_path);
+				// if execv returns, it failed
+				_exit(EXIT_FAILURE);
+			} else if (pid < 0) {
+				// Fork failed
+				perror("fork failed");
+			} else {
+				// Parent process
+				int status;
+				waitpid(pid, &status, 0);
+				free(exec_path);
+			}
+		}
+
+		free(path_copy);
+
 		for (int i = 0; i < tokens->size; i++) {
-			printf("token %d: (%s)\n", i, tokens->items[i]);
+			if (DEBUG) printf("token %d: (%s)\n", i, tokens->items[i]);
 		}
 
 		free(input);
