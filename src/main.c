@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 int main()
 {
@@ -21,6 +22,13 @@ int main()
 
 		tokenlist *tokens = get_tokens(input);
 		int num_tokens = tokens->size;
+
+		// if there's no input, just continue
+		if (num_tokens == 0) {
+			free(input);
+			free_tokens(tokens);
+			continue;
+		}
 
 		// replace tokens like $USER or ~
         for (int i = 0; i < num_tokens; i++) {
@@ -52,13 +60,33 @@ int main()
         char* path_copy = malloc(strlen(path) + 1);
         strcpy(path_copy, path);
 
+		const char* first_token = tokens->items[0];
+		char* exec_path = NULL;
         char* token = strtok(path_copy, ":");
-        while (token != NULL) {
-			printf("PATH token: %s\n", token);
-            token = strtok(NULL, ":");
 
-			// TODO: check if executable exists in this path for tokens[0]
-        }
+        while (token != NULL) {
+			// check if executable exists in this path for tokens[0]
+			exec_path = malloc(strlen(token) + strlen(first_token) + 2);
+			sprintf(exec_path, "%s/%s", token, first_token); // to add the / after the path
+			
+			if (access(exec_path, X_OK) == 0) {
+				// if it's found just break because exec_path is set
+				break;
+			}
+
+			free(exec_path);
+			exec_path = NULL;
+        
+			token = strtok(NULL, ":");
+		}
+
+		if (exec_path == NULL) {
+			printf("Command '%s' not found\n", first_token);
+			// TODO: check for internal commands (part 9)
+		} else {
+			// TODO: run the executable in exec_path
+			free(exec_path);
+		}
 
 		free(path_copy);
 
