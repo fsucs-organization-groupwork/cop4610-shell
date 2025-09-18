@@ -36,7 +36,7 @@ A comprehensive shell interface, made for COP4610.
 
 ### Part 7: Piping
 
-- **Assigned to**: Nadav Peper, Dylan Connolly
+- **Assigned to**: Nadav Peper, Dylan Connolly , Angus Liu
 
 ### Part 8: Background Processing
 
