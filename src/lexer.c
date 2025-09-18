@@ -21,6 +21,12 @@ char *get_input(void) {
 		if (newln != NULL)
 			break;
 	}
+
+  // Issue #18 fix: Add EOF handling for Part 6 compatibility
+  if (buffer == NULL) {
+    return NULL; // EOF encountered
+  }
+
 	buffer = (char *)realloc(buffer, bufsize + 1);
 	buffer[bufsize] = 0;
 	return buffer;
